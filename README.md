@@ -7,3 +7,4 @@ This repository ships with a GitHub Actions workflow that publishes the site to 
 1. Ensure GitHub Pages is configured to use the **GitHub Actions** source in your repository settings.
 2. The workflow at `.github/workflows/deploy.yml` checks out the repository, prepares the Pages environment, uploads the static site files from the repository root, and deploys them to Pages.
 3. Once the workflow completes, the live site URL will appear in the deployment summary for the run.
+4. A previous Deploy Now workflow that required IONOS secrets has been removed to avoid failing runs; GitHub Pages now handles all deployments.
