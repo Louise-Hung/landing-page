@@ -8,7 +8,17 @@ jobs:
   deploy-now:
     runs-on: ubuntu-latest
     steps:
+      - name: Check deployment secrets
+        id: secrets-check
+        run: |
+          if [ -z "${{ secrets.IONOS_API_KEY }}" ] || [ -z "${{ secrets.IONOS_PROJECT_ID }}" ]; then
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+            echo "IONOS secrets are not configured; skipping deployment."
+          else
+            echo "missing=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Fetch project data
+        if: ${{ steps.secrets-check.outputs.missing == 'false' }}
         uses: ionos-deploy-now/retrieve-project-info-action@v1
         id: project
         with:
@@ -16,12 +26,12 @@ jobs:
           project: ${{ secrets.IONOS_PROJECT_ID }}
           service-host: api-eu.ionos.space
       - name: checkout
-        if: ${{ steps.project.outputs.deployment-enabled == 'true' }}
+        if: ${{ steps.secrets-check.outputs.missing == 'false' && steps.project.outputs.deployment-enabled == 'true' }}
         uses: actions/checkout@v2
         with:
           submodules: 'recursive'
       - name: Deploy build
-        if: ${{ steps.project.outputs.deployment-enabled == 'true' }}
+        if: ${{ steps.secrets-check.outputs.missing == 'false' && steps.project.outputs.deployment-enabled == 'true' }}
         uses: ionos-deploy-now/deploy-to-ionos-action@v1
         with:
           api-key: ${{ secrets.IONOS_API_KEY }}
@@ -32,3 +42,6 @@ jobs:
           remote-host: ${{ steps.project.outputs.remote-host }}
           service-host: api-eu.ionos.space
           storage-quota: ${{ steps.project.outputs.storage-quota }}
+      - name: Skip notice
+        if: ${{ steps.secrets-check.outputs.missing == 'true' }}
+        run: echo "Deployment job completed without running because IONOS secrets are missing."
